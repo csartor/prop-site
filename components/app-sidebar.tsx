@@ -1,10 +1,5 @@
 "use client"
 
-import * as React from "react"
-
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -15,167 +10,26 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { SquaresFourIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, GearIcon, QuestionIcon, MagnifyingGlassIcon, DatabaseIcon, ChartLineIcon, FileIcon, CommandIcon } from "@phosphor-icons/react"
+import { BuildingsIcon, GearSixIcon, SquaresFourIcon, UsersThreeIcon } from "@phosphor-icons/react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type * as React from "react"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "#",
-      icon: (
-        <SquaresFourIcon
-        />
-      ),
-    },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: (
-        <ListIcon
-        />
-      ),
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: (
-        <ChartBarIcon
-        />
-      ),
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: (
-        <FolderIcon
-        />
-      ),
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: (
-        <UsersIcon
-        />
-      ),
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: (
-        <CameraIcon
-        />
-      ),
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: (
-        <GearIcon
-        />
-      ),
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: (
-        <QuestionIcon
-        />
-      ),
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: (
-        <MagnifyingGlassIcon
-        />
-      ),
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: (
-        <DatabaseIcon
-        />
-      ),
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: (
-        <ChartLineIcon
-        />
-      ),
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: (
-        <FileIcon
-        />
-      ),
-    },
-  ],
-}
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+const navigation = [
+  { title: "Overview", href: "/admin", icon: SquaresFourIcon },
+  { title: "Users", href: "/admin/users", icon: UsersThreeIcon },
+  { title: "Maker applications", href: "/admin/maker-applications", icon: BuildingsIcon },
+  { title: "Settings", href: "/admin/settings", icon: GearSixIcon },
+]
+
+export function AppSidebar({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  user: { name: string; email: string; avatar?: string }
+}) {
+  const pathname = usePathname()
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -183,21 +37,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<a href="#" />}
+              render={<Link href="/admin" />}
             >
-              <CommandIcon className="size-5!" />
-              <span className="text-base font-semibold">Acme Inc.</span>
+              <BuildingsIcon className="size-5!" weight="fill" />
+              <span className="text-base font-semibold">MakersForge</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <SidebarMenu className="px-2">
+          {navigation.map(({ href, icon: Icon, title }) => (
+            <SidebarMenuItem key={href}>
+              <SidebarMenuButton
+                isActive={pathname === href}
+                tooltip={title}
+                render={<Link href={href} />}
+              >
+                <Icon />
+                <span>{title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

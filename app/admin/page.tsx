@@ -1,18 +1,99 @@
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { requireAdmin } from "@/lib/admin"
 
 export default async function AdminDashboard() {
   const { supabase } = await requireAdmin()
-  const [{ count: requestCount }, { count: applicationCount }, { data: requests }, { data: applications }] =
+  const [{ count: usersCount }, { count: submittedCount }, { data: recentNominations }] =
     await Promise.all([
-      supabase.from("buyer_requests").select("*", { count: "exact", head: true }),
-      supabase.from("maker_applications").select("*", { count: "exact", head: true }),
-      supabase.from("buyer_requests").select("id, title, category, status, review_flags, created_at").order("created_at", { ascending: false }).limit(5),
-      supabase.from("maker_applications").select("id, maker_name, location, review_status, created_at").order("created_at", { ascending: false }).limit(5),
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase
+        .from("maker_nominations")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "submitted"),
+      supabase
+        .from("maker_nominations")
+        .select("id, maker_name, location, status, created_at")
+        .neq("status", "draft")
+        .order("created_at", { ascending: false })
+        .limit(5),
     ])
 
-  return <main className="min-h-svh bg-muted/30 p-6 md:p-10"><div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[220px_1fr]"><aside className="rounded-lg border bg-card p-4"><p className="font-heading text-lg font-bold">MakersForge</p><nav className="mt-6 grid gap-1 text-sm"><Link className="rounded-md bg-muted px-3 py-2" href="/admin">Overview</Link><Link className="rounded-md px-3 py-2 hover:bg-muted" href="/admin/requests">Buyer requests</Link><Link className="rounded-md px-3 py-2 hover:bg-muted" href="/admin/maker-applications">Maker applications</Link></nav></aside><section className="space-y-6"><header><p className="text-sm text-muted-foreground">Commission operations</p><h1 className="font-heading text-3xl font-bold">Admin dashboard</h1></header><div className="grid gap-4 sm:grid-cols-2"><Card><CardHeader><CardTitle>Buyer requests</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{requestCount ?? 0}</CardContent></Card><Card><CardHeader><CardTitle>Maker applications</CardTitle></CardHeader><CardContent className="text-3xl font-bold">{applicationCount ?? 0}</CardContent></Card></div><div className="grid gap-6 xl:grid-cols-2"><Card><CardHeader><CardTitle>Recent buyer requests</CardTitle></CardHeader><CardContent className="space-y-3">{(requests ?? []).map((request) => <Link className="block rounded-md border p-3 hover:bg-muted" href={`/admin/requests/${request.id}`} key={request.id}><p className="font-medium">{request.title}</p><p className="text-sm text-muted-foreground">{request.category} · {request.status}</p>{request.review_flags.map((flag: string) => <Badge className="mr-1 mt-2" key={flag} variant="secondary">{flag}</Badge>)}</Link>)}{requests?.length === 0 ? <p className="text-muted-foreground">No requests yet.</p> : null}</CardContent></Card><Card><CardHeader><CardTitle>Recent maker applications</CardTitle></CardHeader><CardContent className="space-y-3">{(applications ?? []).map((application) => <Link className="block rounded-md border p-3 hover:bg-muted" href={`/admin/maker-applications/${application.id}`} key={application.id}><p className="font-medium">{application.maker_name}</p><p className="text-sm text-muted-foreground">{application.location} · {application.review_status.replaceAll("_", " ")}</p></Link>)}{applications?.length === 0 ? <p className="text-muted-foreground">No applications yet.</p> : null}</CardContent></Card></div></section></div></main>
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-6">
+      <header>
+        <p className="text-sm text-muted-foreground">MakersForge operations</p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Admin dashboard
+          </h1>
+          <Button nativeButton={false} render={<Link href="/admin/makers/new" />}>
+            Add maker
+          </Button>
+        </div>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-medium">Maker profiles</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{usersCount ?? 0}</p>
+            <Button className="mt-4" nativeButton={false} render={<Link href="/admin/users" />} size="sm" variant="outline">
+              View users
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-sm font-medium">
+              Awaiting review
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">{submittedCount ?? 0}</p>
+            <Button className="mt-4" nativeButton={false} render={<Link href="/admin/maker-applications" />} size="sm" variant="outline">
+              Review applications
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle>Recent maker applications</CardTitle>
+          <Button nativeButton={false} render={<Link href="/admin/maker-applications" />} size="sm" variant="ghost">
+            View all
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {recentNominations?.length ? (
+            recentNominations.map((nomination) => (
+              <Link
+                className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                href={`/admin/maker-applications/${nomination.id}`}
+                key={nomination.id}
+              >
+                <div>
+                  <p className="font-medium">{nomination.maker_name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {nomination.location}
+                  </p>
+                </div>
+                <Badge variant="secondary">{nomination.status}</Badge>
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No maker applications have been submitted yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

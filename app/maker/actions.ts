@@ -61,5 +61,4 @@ export async function saveQuote(formData: FormData) {
   }
   revalidatePath("/maker/assignments")
   revalidatePath(`/maker/assignments/${assignment.id}/quote`)
-  revalidatePath(`/admin/requests/${assignment.buyer_request_id}`)
 }

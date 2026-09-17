@@ -8,9 +8,16 @@ Always use supabase MCP
 
 ## UI and form standards
 
-- Use the project's shadcn/ui theme and component library for every UI change.
-  Reuse its installed primitives first; add missing components through the
-  shadcn CLI rather than creating parallel custom primitives.
+- Always use shadcn/ui for every UI primitive that shadcn provides (Button,
+  Input, Select, Card, Dialog, Tabs, Badge, Form/Field, Combobox, Table, and
+  the rest). Do not invent a parallel custom component, raw HTML control, or
+  one-off styled element when a shadcn primitive can do the job.
+- Reuse installed primitives from `components/ui/` first. If the needed
+  component is not installed, add it with the shadcn CLI
+  (`npx shadcn@latest add <component>`) before writing any custom markup.
+- Custom components are allowed only when shadcn has no equivalent. Even then,
+  compose them from shadcn primitives, the project theme tokens, and
+  `@phosphor-icons/react` instead of building new base controls.
 - Use `@phosphor-icons/react` for all application UI icons. Preserve exported
   design assets only when they are a unique brand/design asset rather than a
   standard interface icon.

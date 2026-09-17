@@ -1,8 +1,7 @@
-import Link from "next/link"
-
+import { MakerDirectoryCard } from "@/components/maker-directory-card"
 import { MakerDirectoryFilters } from "@/components/maker-directory-filters"
-import { Card, CardContent } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/server"
+import { normalizeDirectoryUtm } from "@/lib/tracking"
 
 type FilterCategory = "maker_type" | "fandom" | "availability"
 
@@ -13,7 +12,7 @@ export default async function MakersPage({
 }) {
   const selectedFilters = await searchParams
   const supabase = await createClient()
-  const [{ data: options }, { data: assignments }, { data: makers }] =
+  const [{ data: options }, { data: assignments }, { data: makers }, { data: settings }] =
     await Promise.all([
       supabase
         .from("maker_filter_options")
@@ -21,49 +20,69 @@ export default async function MakersPage({
         .eq("enabled", true)
         .order("sort_order", { ascending: true }),
       supabase
-        .from("profile_filter_options")
-        .select("profile_user_id, filter_option_id"),
+        .from("maker_fandoms")
+        .select("maker_id, filter_option_id"),
       supabase
-    .from("profiles")
-    .select("user_id, username, display_name, bio, location, specialties")
-    .eq("visibility", "public")
-    .not("published_at", "is", null)
+        .from("makers")
+        .select("id, display_name, descriptor, description, location, accepting_commissions, maker_type_option_id, thumbnail_path, website_url, instagram_url, patreon_url, facebook_url")
+        .not("published_at", "is", null)
         .order("published_at", { ascending: false }),
+      supabase
+        .from("site_settings")
+        .select("utm_source, utm_medium, utm_campaign")
+        .eq("singleton", true)
+        .maybeSingle(),
     ])
+  const directoryUtm = normalizeDirectoryUtm(settings)
   const directoryOptions = (options ?? []) as Array<{
     id: string
     category: FilterCategory
     label: string
     slug: string
   }>
-  const selectedOptionIds = (Object.entries(selectedFilters) as Array<
-    [FilterCategory, string | undefined]
-  >)
-    .map(([category, slug]) =>
-      directoryOptions.find(
-        (option) => option.category === category && option.slug === slug
-      )?.id
+  const selectedFandomId = directoryOptions.find(
+    (option) =>
+      option.category === "fandom" && option.slug === selectedFilters.fandom,
+  )?.id
+  const selectedMakerTypeId = directoryOptions.find(
+    (option) =>
+      option.category === "maker_type" &&
+      option.slug === selectedFilters.maker_type,
+  )?.id
+  const fandomLabels = new Map<string, string[]>()
+  for (const assignment of assignments ?? []) {
+    const label = directoryOptions.find(
+      (option) => option.id === assignment.filter_option_id,
+    )?.label
+    if (!label) continue
+    fandomLabels.set(assignment.maker_id, [
+      ...(fandomLabels.get(assignment.maker_id) ?? []),
+      label,
+    ])
+  }
+  const visibleMakers = (makers ?? []).filter((maker) => {
+    if (
+      selectedMakerTypeId &&
+      maker.maker_type_option_id !== selectedMakerTypeId
+    ) {
+      return false
+    }
+    if (
+      selectedFandomId &&
+      !(assignments ?? []).some(
+        (assignment) =>
+          assignment.maker_id === maker.id &&
+          assignment.filter_option_id === selectedFandomId,
+      )
+    ) {
+      return false
+    }
+
+    return !(
+      selectedFilters.availability === "commissions-open" &&
+      !maker.accepting_commissions
     )
-    .filter((id): id is string => Boolean(id))
-  const visibleUserIds =
-    selectedOptionIds.length === 0
-      ? null
-      : new Set(
-          (assignments ?? [])
-            .filter((assignment) =>
-              selectedOptionIds.every((optionId) =>
-                (assignments ?? []).some(
-                  (candidate) =>
-                    candidate.profile_user_id === assignment.profile_user_id &&
-                    candidate.filter_option_id === optionId
-                )
-              )
-            )
-            .map((assignment) => assignment.profile_user_id)
-        )
-  const visibleMakers = (makers ?? []).filter((maker) =>
-    visibleUserIds ? visibleUserIds.has(maker.user_id) : true
-  )
+  })
 
   return (
     <main className="min-h-svh bg-background px-6 py-10">
@@ -79,28 +98,28 @@ export default async function MakersPage({
             }))}
           />
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 space-y-4">
           {visibleMakers.map((maker) => (
-            <Link href={`/makers/${maker.username}`} key={maker.username}>
-              <Card className="h-full transition-colors hover:bg-accent">
-                <CardContent className="p-5">
-                  <h2 className="font-heading text-lg font-bold">
-                    {maker.display_name}
-                  </h2>
-                  <p className="text-sm text-forge-orange">@{maker.username}</p>
-                  <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-                    {maker.bio || "Maker profile"}
-                  </p>
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    {maker.location || "Location undisclosed"}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
+            <MakerDirectoryCard
+              fandoms={fandomLabels.get(maker.id) ?? []}
+              key={maker.id}
+              utm={directoryUtm}
+              maker={{
+                ...maker,
+                makerType: directoryOptions.find(
+                  (option) => option.id === maker.maker_type_option_id,
+                )?.label ?? null,
+                thumbnailUrl: maker.thumbnail_path
+                  ? supabase.storage
+                      .from("maker-assets")
+                      .getPublicUrl(maker.thumbnail_path).data.publicUrl
+                  : null,
+              }}
+            />
           ))}
         </div>
         {visibleMakers.length === 0 ? (
-          <p className="mt-8 text-muted-foreground">No public maker profiles yet.</p>
+          <p className="mt-8 text-muted-foreground">No makers have been published yet.</p>
         ) : null}
       </section>
     </main>

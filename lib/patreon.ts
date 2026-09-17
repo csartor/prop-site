@@ -52,6 +52,11 @@ export type PatreonCampaignDebug = {
   }>
 }
 
+export type PatreonCampaign = {
+  id: string
+  attributes: Record<string, unknown>
+}
+
 function getRelationshipId(
   resource: PatreonResource,
   relationship: string
@@ -109,6 +114,40 @@ async function getPatreonCampaignDetails(
 
   const payload = (await response.json()) as { data?: PatreonResource }
   return payload.data?.attributes ?? null
+}
+
+export async function getPatreonCampaign(
+  accessToken: string,
+  campaignId: string,
+): Promise<PatreonCampaign> {
+  const params = new URLSearchParams({
+    "fields[campaign]": CAMPAIGN_FIELDS,
+  })
+  const response = await fetch(
+    `${PATREON_CAMPAIGNS_URL}/${encodeURIComponent(campaignId)}?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+        "User-Agent": PATREON_USER_AGENT,
+      },
+      cache: "no-store",
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Patreon API returned ${response.status}`)
+  }
+
+  const payload = (await response.json()) as { data?: PatreonResource }
+  if (!payload.data?.id) {
+    throw new Error("Patreon did not return the requested campaign.")
+  }
+
+  return {
+    id: payload.data.id,
+    attributes: payload.data.attributes ?? {},
+  }
 }
 
 export async function getPatreonMemberships(accessToken: string) {

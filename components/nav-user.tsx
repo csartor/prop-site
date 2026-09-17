@@ -1,5 +1,8 @@
 "use client"
 
+import { DotsThreeVerticalIcon, SignOutIcon } from "@phosphor-icons/react"
+import { useRouter } from "next/navigation"
+
 import {
   Avatar,
   AvatarFallback,
@@ -20,7 +23,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { DotsThreeVerticalIcon, UserCircleIcon, CreditCardIcon, BellIcon, SignOutIcon } from "@phosphor-icons/react"
+import { createClient } from "@/lib/supabase/client"
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+}
 
 export function NavUser({
   user,
@@ -28,10 +40,19 @@ export function NavUser({
   user: {
     name: string
     email: string
-    avatar: string
+    avatar?: string
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
+  async function signOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -41,9 +62,9 @@ export function NavUser({
               <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
             }
           >
-            <Avatar className="size-8 rounded-lg grayscale">
+            <Avatar className="size-8 rounded-lg">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              <AvatarFallback className="rounded-lg">{initials(user.name)}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{user.name}</span>
@@ -64,7 +85,7 @@ export function NavUser({
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="size-8">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{initials(user.name)}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
@@ -76,27 +97,8 @@ export function NavUser({
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <UserCircleIcon
-                />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon
-                />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon
-                />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <SignOutIcon
-              />
+            <DropdownMenuItem variant="destructive" onClick={signOut}>
+              <SignOutIcon />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

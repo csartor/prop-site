@@ -2,7 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { SiteHeader } from "@/components/site-header"
+import { SiteHeaderWrapper } from "@/components/site-header-wrapper"
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server"
 
@@ -33,7 +33,7 @@ export default async function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <SiteHeader user={user} />
+          <SiteHeaderWrapper user={user} />
           {children}
         </ThemeProvider>
       </body>
