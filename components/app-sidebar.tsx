@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { BuildingsIcon, GearSixIcon, SquaresFourIcon, UsersThreeIcon } from "@phosphor-icons/react"
+import { BuildingsIcon, FlagIcon, GearSixIcon, SquaresFourIcon, UsersThreeIcon } from "@phosphor-icons/react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type * as React from "react"
@@ -19,6 +19,7 @@ const navigation = [
   { title: "Overview", href: "/admin", icon: SquaresFourIcon },
   { title: "Users", href: "/admin/users", icon: UsersThreeIcon },
   { title: "Maker applications", href: "/admin/maker-applications", icon: BuildingsIcon },
+  { title: "Fandoms", href: "/admin/fandoms", icon: FlagIcon },
   { title: "Settings", href: "/admin/settings", icon: GearSixIcon },
 ]
 

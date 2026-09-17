@@ -290,6 +290,56 @@ export async function updateDirectoryTrackingSettings(input: {
   revalidatePath("/makers")
 }
 
+const fandomLabelSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter a fandom name.")
+  .max(100, "Use 100 characters or fewer.")
+
+function fandomSlug(label: string) {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
+export async function createAdminFandom(input: { label: string }) {
+  const label = fandomLabelSchema.parse(input.label)
+  const slug = fandomSlug(label)
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    throw new Error("Enter a fandom name with letters or numbers.")
+  }
+
+  const { supabase } = await requireAdmin()
+  const { data: latest } = await supabase
+    .from("maker_filter_options")
+    .select("sort_order")
+    .eq("category", "fandom")
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { error } = await supabase.from("maker_filter_options").insert({
+    category: "fandom",
+    label,
+    slug,
+    sort_order: (latest?.sort_order ?? 0) + 1,
+    enabled: true,
+  })
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("That fandom already exists.")
+    }
+    throw new Error(error.message)
+  }
+
+  revalidatePath("/admin/fandoms")
+  revalidatePath("/admin/makers/new")
+  revalidatePath("/makers")
+  revalidatePath("/nominate")
+}
+
 export async function updateMakerNominationStatus(formData: FormData) {
   const { id, status, maker_type_option_id } = reviewSchema.parse({
     id: formData.get("id"),
