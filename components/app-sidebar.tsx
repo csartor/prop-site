@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { BuildingsIcon, FlagIcon, GearSixIcon, SquaresFourIcon, UsersThreeIcon } from "@phosphor-icons/react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type * as React from "react"
@@ -38,10 +39,15 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<Link href="/admin" />}
+              render={<Link href="/" />}
             >
-              <BuildingsIcon className="size-5!" weight="fill" />
-              <span className="text-base font-semibold">MakersForge</span>
+              <Image
+                alt="fab.zone"
+                className="h-6 w-auto invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0"
+                height={37}
+                src="/assets/logo.svg"
+                width={213}
+              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -1,37 +1,45 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Lora } from "next/font/google"
+import type { Metadata } from "next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeaderWrapper } from "@/components/site-header-wrapper"
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server"
+import { getOptionalUser } from "@/lib/supabase/server"
 
-const geistMonoHeading = Geist_Mono({subsets:['latin'],variable:'--font-heading'});
+export const metadata: Metadata = {
+  title: "fab.zone",
+}
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
+const fontSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const fontSerif = Lora({
+  subsets: ["latin"],
+  variable: "--font-serif",
+});
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
-})
+});
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getOptionalUser()
 
   return (
     <html
       lang="en"
+      className="dark"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable, geistMonoHeading.variable)}
     >
-      <body>
+      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
         <ThemeProvider>
           <SiteHeaderWrapper user={user} />
           {children}

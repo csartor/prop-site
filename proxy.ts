@@ -25,7 +25,16 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getClaims()
+  try {
+    await Promise.race([
+      supabase.auth.getClaims(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Supabase auth timed out.")), 3000)
+      }),
+    ])
+  } catch {
+    // Auth is unreachable (paused project, DNS, or network). Keep serving the page.
+  }
 
   return response
 }

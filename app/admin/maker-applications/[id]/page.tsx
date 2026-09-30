@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { notFound } from "next/navigation"
 
 import { MakerNominationReviewForm } from "@/components/maker-nomination-review-form"
@@ -168,13 +169,17 @@ export default async function AdminMakerApplicationDetail({
                 <CardTitle>Thumbnail</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Signed private storage URLs are intentionally rendered directly. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt={`${nomination.maker_name} submission thumbnail`}
-                  className="aspect-square w-full rounded-md object-cover"
-                  src={thumbnail.signedUrl}
-                />
+                <div className="relative aspect-square w-full">
+                  {/* Signed private URLs expire, so they are not cached by the optimizer. */}
+                  <Image
+                    alt={`${nomination.maker_name} submission thumbnail`}
+                    className="rounded-md object-cover"
+                    fill
+                    sizes="(min-width: 768px) 24rem, 100vw"
+                    src={thumbnail.signedUrl}
+                    unoptimized
+                  />
+                </div>
               </CardContent>
             </Card>
           ) : null}

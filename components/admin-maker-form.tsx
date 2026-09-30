@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import Image from "next/image"
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
@@ -271,15 +272,13 @@ export function AdminMakerForm({
             {thumbnail ? ` Selected: ${thumbnail.name}` : ""}
           </FieldDescription>
           {importedImageUrl && !thumbnail ? (
-            <>
-              {/* The imported image is fetched server-side on publish. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt="Imported Patreon campaign artwork"
-                className="mt-3 size-20 rounded-md object-cover"
-                src={importedImageUrl}
-              />
-            </>
+            <Image
+              alt="Imported Patreon campaign artwork"
+              className="mt-3 size-20 rounded-md object-cover"
+              height={80}
+              src={importedImageUrl}
+              width={80}
+            />
           ) : null}
         </Field>
         <Field className="md:col-span-2" data-invalid={Boolean(form.formState.errors.fandomIds)}>

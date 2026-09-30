@@ -7,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 
-/* eslint-disable @next/next/no-img-element */
-
 const buildImages = [
   "/makersforge/build-progress.png",
   "/makersforge/build-helmet.png",
@@ -51,10 +49,13 @@ export default async function MakerProfile({
         <Card className="overflow-hidden self-start">
           <div className="relative aspect-square bg-muted">
             {profile.avatar_url ? (
-              <img
+              <Image
                 alt=""
-                className="size-full object-cover"
+                className="object-cover"
+                fill
+                sizes="360px"
                 src={profile.avatar_url}
+                unoptimized
               />
             ) : (
               <Image

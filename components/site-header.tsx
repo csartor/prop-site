@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import type { User } from "@supabase/supabase-js"
 
@@ -9,11 +10,14 @@ export function SiteHeader({ user }: { user: User | null }) {
   return (
     <header className="border-b bg-background">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-6 md:px-10">
-        <Link
-          href="/"
-          className="font-heading text-base font-semibold tracking-tight"
-        >
-          MakersForge
+        <Link href="/" className="inline-flex items-center">
+          <Image
+            alt="fab.zone"
+            className="h-7 w-auto invert hue-rotate-180 dark:invert-0 dark:hue-rotate-0"
+            height={37}
+            src="/assets/logo.svg"
+            width={213}
+          />
         </Link>
         <nav className="flex items-center gap-2" aria-label="Account">
           {user ? (

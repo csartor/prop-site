@@ -6,6 +6,7 @@ import {
   InstagramLogoIcon,
   PatreonLogoIcon,
 } from "@phosphor-icons/react"
+import Image from "next/image"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -50,15 +51,13 @@ export function MakerDirectoryCard({
     <Card className="border-white/10 bg-forge-surface py-0 text-forge-ink">
       <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
         {maker.thumbnailUrl ? (
-          <>
-            {/* Public storage URLs are data-driven; image optimization is not required. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt=""
-              className="size-20 shrink-0 rounded-xl object-cover"
-              src={maker.thumbnailUrl}
-            />
-          </>
+          <Image
+            alt=""
+            className="size-20 shrink-0 rounded-xl object-cover"
+            height={80}
+            src={maker.thumbnailUrl}
+            width={80}
+          />
         ) : (
           <div className="size-20 shrink-0 rounded-xl bg-forge-panel" />
         )}

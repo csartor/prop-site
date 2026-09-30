@@ -8,7 +8,12 @@ import { SiteHeader } from "@/components/site-header"
 export function SiteHeaderWrapper({ user }: { user: User | null }) {
   const pathname = usePathname()
 
-  if (pathname.startsWith("/admin")) {
+  if (
+    pathname.startsWith("/admin") ||
+    pathname === "/" ||
+    pathname === "/profile" ||
+    pathname.startsWith("/projects/")
+  ) {
     return null
   }
 

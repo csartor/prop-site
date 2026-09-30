@@ -1,5 +1,17 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import type { User } from "@supabase/supabase-js"
+
+const authTimeoutMs = 3000
+
+function withAuthTimeout<T>(promise: Promise<T>) {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Supabase auth timed out.")), authTimeoutMs)
+    }),
+  ])
+}
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -25,4 +37,16 @@ export async function createClient() {
       },
     }
   )
+}
+
+export async function getOptionalUser(): Promise<User | null> {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await withAuthTimeout(supabase.auth.getUser())
+    return user
+  } catch {
+    return null
+  }
 }

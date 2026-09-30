@@ -1,24 +1,24 @@
-import { redirect } from "next/navigation"
-
-import { createClient } from "@/lib/supabase/server"
+import { HomeFeed } from "@/components/home-feed"
+import { getHomeViewer, listHomePosts } from "@/lib/posts"
+import { listOwnedProjects } from "@/lib/projects"
 
 export default async function Page() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [viewer, result, projects] = await Promise.all([
+    getHomeViewer(),
+    listHomePosts(),
+    listOwnedProjects(),
+  ])
 
-  if (!user) redirect("/login")
+  if ("error" in result) {
+    return (
+      <HomeFeed
+        loadError="Posts are unavailable right now."
+        posts={[]}
+        projects={projects}
+        viewer={viewer}
+      />
+    )
+  }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username, onboarding_completed_at")
-    .eq("user_id", user.id)
-    .maybeSingle()
-
-  redirect(
-    profile?.onboarding_completed_at && profile.username
-      ? `/makers/${profile.username}`
-      : "/onboarding"
-  )
+  return <HomeFeed posts={result.posts} projects={projects} viewer={viewer} />
 }
