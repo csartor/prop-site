@@ -18,7 +18,7 @@ export default async function OnboardingPage() {
     .maybeSingle()
 
   if (profile?.onboarding_completed_at) {
-    redirect(`/makers/${profile.username}`)
+    redirect(`/${profile.username}`)
   }
 
   return <OnboardingFlow user={user} profile={profile} />

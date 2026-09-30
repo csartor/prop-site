@@ -65,7 +65,7 @@ export default async function AdminUsersPage() {
                     {profile.username && profile.published_at ? (
                       <Link
                         className="underline underline-offset-4"
-                        href={`/makers/${profile.username}`}
+                        href={`/${profile.username}`}
                       >
                         @{profile.username}
                       </Link>

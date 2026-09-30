@@ -27,12 +27,33 @@ import { createClient } from "@/lib/supabase/client"
 
 type Profile = Record<string, unknown> | null
 
+const reservedUsernames = new Set([
+  "admin",
+  "apply",
+  "debug",
+  "login",
+  "maker",
+  "makers",
+  "memberships",
+  "nominate",
+  "onboarding",
+  "profile",
+  "projects",
+  "request",
+  "requests",
+  "signup",
+])
+
 const profileSchema = z.object({
   display_name: z.string().trim().max(100, "Use 100 characters or fewer."),
   username: z
     .string()
     .trim()
-    .regex(/^$|^[a-z0-9][a-z0-9_-]{2,49}$/, "Use 3–50 lowercase letters, numbers, underscores, or hyphens."),
+    .regex(/^$|^[a-z0-9][a-z0-9_-]{2,49}$/, "Use 3–50 lowercase letters, numbers, underscores, or hyphens.")
+    .refine(
+      (value) => !reservedUsernames.has(value),
+      "That username is reserved.",
+    ),
   bio: z.string().max(300, "Use 300 characters or fewer."),
   location: z.string().trim().max(100, "Use 100 characters or fewer."),
   avatar_url: z.string().url("Enter a valid URL.").or(z.literal("")),
@@ -280,7 +301,7 @@ export function OnboardingFlow({
       return
     }
     if (publish) {
-      router.push(`/makers/${username}`)
+      router.push(`/${username}`)
       router.refresh()
       return
     }

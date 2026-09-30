@@ -89,7 +89,7 @@ export function ProjectSupportRail({ project }: { project: ProjectPage }) {
           <Button
             className="w-full"
             nativeButton={false}
-            render={<Link href={`/makers/${project.username}`} />}
+            render={<Link href={`/${project.username}`} />}
             variant="outline"
           >
             View profile

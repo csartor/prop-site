@@ -31,7 +31,7 @@ export function ProjectHero({ project }: { project: ProjectPage }) {
               {project.title}
             </h1>
             <div className="flex items-center justify-between gap-3">
-              <Link className="flex min-w-0 items-center gap-2.5" href={`/makers/${project.username}`}>
+              <Link className="flex min-w-0 items-center gap-2.5" href={`/${project.username}`}>
                 <Avatar className="size-8">
                   {project.avatarUrl ? <AvatarImage alt="" src={project.avatarUrl} /> : null}
                   <AvatarFallback>{project.author.slice(0, 1)}</AvatarFallback>
