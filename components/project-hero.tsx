@@ -25,35 +25,36 @@ export function ProjectHero({ project }: { project: ProjectPage }) {
     <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] lg:gap-10">
       <ProjectGallery urls={project.galleryUrls} />
       <div className="flex min-w-0 flex-col gap-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
-            {project.buildLabel} · By {project.username}
-          </p>
-          <ProjectStatusBadge status={project.status} />
-        </div>
-        <div className="flex flex-col gap-3">
-          <h1 className="text-[1.875rem] leading-[1.03] tracking-[-0.04em] text-foreground lg:text-5xl">
-            {project.title}
-          </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{project.description}</p>
-        </div>
-        {project.tags.length ? (
-          <div className="flex flex-wrap gap-1.5">
-            {project.tags.map((tag) => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 border-b border-border pb-4">
+            <h1 className="text-[1.875rem] leading-[1.03] tracking-[-0.04em] text-foreground lg:text-5xl">
+              {project.title}
+            </h1>
+            <div className="flex items-center justify-between gap-3">
+              <Link className="flex min-w-0 items-center gap-2.5" href={`/makers/${project.username}`}>
+                <Avatar className="size-8">
+                  {project.avatarUrl ? <AvatarImage alt="" src={project.avatarUrl} /> : null}
+                  <AvatarFallback>{project.author.slice(0, 1)}</AvatarFallback>
+                </Avatar>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[10px] font-medium text-muted-foreground">
+                    Built and documented by
+                  </span>
+                  <span className="truncate text-sm font-medium text-foreground">{project.author}</span>
+                </span>
+              </Link>
+              <ProjectStatusBadge className="shrink-0" status={project.status} />
+            </div>
           </div>
-        ) : null}
-        <Link className="flex w-fit items-center gap-2.5" href={`/makers/${project.username}`}>
-          <Avatar className="size-8">
-            {project.avatarUrl ? <AvatarImage alt="" src={project.avatarUrl} /> : null}
-            <AvatarFallback>{project.author.slice(0, 1)}</AvatarFallback>
-          </Avatar>
-          <span className="flex flex-col">
-            <span className="text-[10px] text-muted-foreground">Built and documented by</span>
-            <span className="text-xs text-foreground">{project.author}</span>
-          </span>
-        </Link>
+          <p className="text-sm leading-[1.55] text-muted-foreground">{project.description}</p>
+          {project.tags.length ? (
+            <div className="flex flex-wrap gap-[7px]">
+              {project.tags.map((tag) => (
+                <Tag key={tag}>{tag}</Tag>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <div className="flex items-center gap-2.5">
           <Button className="h-[46px] flex-1" type="button">
             <PlusIcon />
@@ -69,7 +70,7 @@ export function ProjectHero({ project }: { project: ProjectPage }) {
             <DotsThreeIcon className="size-[18px]" />
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-[22px] gap-y-2 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <UsersIcon className="size-[15px]" />
             0 followers
