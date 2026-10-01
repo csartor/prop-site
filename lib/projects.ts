@@ -53,6 +53,9 @@ export type ProjectPage = {
   scale: string
   techniques: string
   tools: string
+  startedOn: string | null
+  completedOn: string | null
+  isOwner: boolean
   buildLabel: string
   coverUrl: string | null
   galleryUrls: string[]
@@ -163,7 +166,7 @@ type ProjectPostRow = {
 }
 
 export async function getProjectPage(id: string): Promise<ProjectPage | null> {
-  const supabase = await createClient()
+  const [supabase, user] = await Promise.all([createClient(), getOptionalUser()])
   const { data } = await supabase
     .from("projects")
     .select(
@@ -262,6 +265,9 @@ export async function getProjectPage(id: string): Promise<ProjectPage | null> {
     scale: blank(row.scale),
     techniques: blank(row.techniques),
     tools: blank(row.tools),
+    startedOn: row.started_on,
+    completedOn: row.completed_on,
+    isOwner: user?.id === row.user_id,
     buildLabel: `BLD-${String(row.build_number).padStart(4, "0")}`,
     coverUrl,
     galleryUrls,

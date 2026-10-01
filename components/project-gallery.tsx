@@ -13,15 +13,15 @@ export function ProjectGallery({ urls }: { urls: string[] }) {
 
   if (!slide) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center rounded-[10px] bg-muted text-sm text-muted-foreground lg:min-h-80">
+      <div className="flex aspect-4/3 items-center justify-center rounded-lg bg-muted text-sm text-muted-foreground">
         No photos yet.
       </div>
     )
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-[4.625rem_minmax(0,1fr)] lg:items-stretch">
-      <div className="order-2 flex gap-2.5 overflow-x-auto lg:order-1 lg:h-full lg:flex-col lg:overflow-y-auto">
+    <div className="grid gap-3 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-stretch">
+      <div className="order-2 flex gap-2 overflow-x-auto lg:order-1 lg:h-full lg:flex-col lg:overflow-y-auto">
         {urls.map((url, index) => {
           const isSelected = index === selected
           return (
@@ -29,22 +29,22 @@ export function ProjectGallery({ urls }: { urls: string[] }) {
               aria-label={`Photo ${index + 1}`}
               aria-pressed={isSelected}
               className={cn(
-                "relative size-[4.625rem] shrink-0 overflow-hidden rounded-[7px] bg-muted",
+                "relative size-18 shrink-0 overflow-hidden rounded-lg bg-muted",
                 isSelected ? undefined : "opacity-80",
               )}
               key={`${url}-${index}`}
               onClick={() => setSelected(index)}
               type="button"
             >
-              <Image alt="" className="object-cover" fill sizes="74px" src={url} />
+              <Image alt="" className="object-cover" fill sizes="4.5rem" src={url} />
               {isSelected ? (
-                <span className="pointer-events-none absolute inset-0 rounded-[7px] ring-2 ring-primary ring-inset" />
+                <span className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-primary ring-inset" />
               ) : null}
             </button>
           )
         })}
       </div>
-      <div className="relative order-1 aspect-[4/3] overflow-hidden rounded-[10px] bg-black shadow-[0_14px_18px_rgba(0,0,0,0.32)] lg:order-2 lg:aspect-auto lg:min-h-[28rem]">
+      <div className="relative order-1 aspect-4/3 overflow-hidden rounded-lg bg-black shadow-lg lg:order-2">
         <Image
           alt=""
           className="object-contain"

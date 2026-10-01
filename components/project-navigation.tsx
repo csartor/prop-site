@@ -10,11 +10,11 @@ export function ProjectNavigation({ updateCount }: { updateCount: number }) {
   ]
 
   return (
-    <nav aria-label="Project sections" className="flex h-[50px] min-w-max items-stretch gap-[38px]">
+    <nav aria-label="Project sections" className="flex h-12 min-w-max items-stretch gap-8">
       {tabs.map((tab) => (
         <Button
           className={cn(
-            "relative h-full gap-[7px] rounded-none px-0 hover:bg-transparent",
+            "relative h-full gap-2 rounded-none px-0 hover:bg-transparent",
             tab.active
               ? "text-sm font-normal text-foreground"
               : "text-xs font-medium text-muted-foreground",
@@ -27,7 +27,7 @@ export function ProjectNavigation({ updateCount }: { updateCount: number }) {
           {tab.count ? (
             <span
               className={cn(
-                "font-mono text-[10px] font-semibold",
+                "font-mono text-xs font-semibold",
                 tab.active ? "text-primary" : "text-muted-foreground",
               )}
             >

@@ -144,6 +144,107 @@ export async function createPost(formData: FormData): Promise<{ error?: string }
   return {}
 }
 
+const updatePostSchema = z.object({
+  title: z.string().trim().min(1, "Enter a title.").max(120, "Use 120 characters or fewer."),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Enter a description.")
+    .max(2000, "Use 2000 characters or fewer."),
+  milestone: z.string().trim().max(40, "Use 40 characters or fewer."),
+  processNote: z.string().trim().max(160, "Use 160 characters or fewer."),
+})
+
+export async function updatePost(
+  postId: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "Sign in to update this post." }
+
+  const parsedId = z.string().uuid().safeParse(postId)
+  if (!parsedId.success) return { error: "That post is not available." }
+
+  const parsed = updatePostSchema.safeParse({
+    title: formData.get("title"),
+    body: formData.get("body"),
+    milestone: String(formData.get("milestone") ?? ""),
+    processNote: String(formData.get("processNote") ?? ""),
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the update and try again." }
+  }
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("id, project_id")
+    .eq("id", parsedId.data)
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (!post) return { error: "That post is not available." }
+
+  const { error } = await supabase
+    .from("posts")
+    .update({
+      title: parsed.data.title,
+      body: parsed.data.body,
+      milestone: noteOrNull(parsed.data.milestone),
+      process_note: noteOrNull(parsed.data.processNote),
+    })
+    .eq("id", parsedId.data)
+    .eq("user_id", user.id)
+  if (error) return { error: error.message }
+
+  revalidatePath("/")
+  revalidatePath("/profile")
+  if (post.project_id) revalidatePath(`/projects/${post.project_id}`)
+  return {}
+}
+
+export async function deletePost(postId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "Sign in to update this post." }
+
+  const parsedId = z.string().uuid().safeParse(postId)
+  if (!parsedId.success) return { error: "That post is not available." }
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("id, project_id")
+    .eq("id", parsedId.data)
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (!post) return { error: "That post is not available." }
+
+  const { data: images } = await supabase
+    .from("post_images")
+    .select("storage_path")
+    .eq("post_id", post.id)
+
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", post.id)
+    .eq("user_id", user.id)
+  if (error) return { error: error.message }
+
+  const paths = (images ?? [])
+    .map((image) => image.storage_path)
+    .filter((path): path is string => Boolean(path))
+  if (paths.length) await supabase.storage.from("post-assets").remove(paths)
+
+  revalidatePath("/")
+  revalidatePath("/profile")
+  if (post.project_id) revalidatePath(`/projects/${post.project_id}`)
+  return {}
+}
+
 export async function assignPostProject(
   postId: string,
   projectId: string | null,

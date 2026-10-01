@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckIcon, PlusIcon } from "@phosphor-icons/react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
 import { createPost } from "@/app/posts/actions"
+import type { ComposerIntent } from "@/components/composer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -66,11 +67,13 @@ export function CreatePostDialog({
   onOpenChange,
   author,
   projects,
+  intent = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   author: { displayName: string; username: string; avatarUrl: string | null }
   projects: ProjectOption[]
+  intent?: ComposerIntent | null
 }) {
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
@@ -97,6 +100,22 @@ export function CreatePostDialog({
   const project = useWatch({ control: form.control, name: "project" }) ?? "none"
   const selectedImage = images.find((image) => image.id === selectedId) ?? images[0]
   const coverImage = images.find((image) => image.id === coverId) ?? images[0]
+  const appliedIntent = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!open || !intent) {
+      appliedIntent.current = null
+      return
+    }
+    if (appliedIntent.current === intent.key) return
+    appliedIntent.current = intent.key
+    if (intent.projectId) form.setValue("project", intent.projectId)
+    const timer = window.setTimeout(() => {
+      if (intent.focus === "photo") fileInput.current?.click()
+      if (intent.focus === "process") document.getElementById("post-process-note")?.focus()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [form, intent, open])
 
   function resetComposer() {
     form.reset()

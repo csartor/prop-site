@@ -6,12 +6,13 @@ import {
   BellRingingIcon,
   ClipboardTextIcon,
   FolderOpenIcon,
+  PencilSimpleIcon,
   UserIcon,
 } from "@phosphor-icons/react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { projectStatusLabel, type ProjectStatus } from "@/lib/project-status"
 import type { ProjectPage } from "@/lib/projects"
@@ -24,27 +25,53 @@ const statusColor: Record<ProjectStatus, string> = {
   cancelled: "text-destructive",
 }
 
-export function ProjectSupportRail({ project }: { project: ProjectPage }) {
+const resourceCategories = [
+  { label: "Files", action: "Add file" },
+  { label: "Tutorial links", action: "Add link" },
+  { label: "Techniques", action: "Add note" },
+  { label: "References", action: "Add reference" },
+  { label: "Source files", action: "Add source" },
+]
+
+export function ProjectSupportRail({
+  project,
+  onEdit,
+}: {
+  project: ProjectPage
+  onEdit?: () => void
+}) {
   const rows = [
     { label: "Status", value: projectStatusLabel(project.status), valueClassName: statusColor[project.status] },
     { label: "Started", value: project.startedLabel },
     { label: "Completed", value: project.completedLabel },
     { label: "Material", value: project.material },
     { label: "Scale", value: project.scale },
-    { label: "Techniques", value: project.techniques },
-    { label: "Tools", value: project.tools },
     { label: "Total updates", value: String(project.updates.length) },
     { label: "Build ID", value: project.buildLabel },
   ]
 
   return (
-    <aside className="flex w-full flex-col gap-4 lg:w-[21.5rem]">
+    <aside className="flex w-full flex-col gap-4 lg:w-80">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ClipboardTextIcon className="size-4" />
             Build info
           </CardTitle>
+          {project.isOwner && onEdit ? (
+            <CardAction>
+              <Button
+                className="rounded-full"
+                size="sm"
+                onClick={onEdit}
+                type="button"
+                variant="outline"
+              >
+                <PencilSimpleIcon className="size-4" />
+                Edit
+              </Button>
+            </CardAction>
+          ) : null}
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Separator />
@@ -86,15 +113,31 @@ export function ProjectSupportRail({ project }: { project: ProjectPage }) {
             <Stat label="Followers" value="0" />
             <Stat label="Level" value={project.creator.experienceLevel ?? "—"} />
           </dl>
-          <Button
-            className="w-full"
-            nativeButton={false}
-            render={<Link href={`/${project.username}`} />}
-            variant="outline"
-          >
-            View profile
-            <ArrowRightIcon data-icon="inline-end" />
-          </Button>
+          {project.isOwner ? (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                size="lg"
+                nativeButton={false}
+                render={<Link href={`/${project.username}`} />}
+                variant="outline"
+              >
+                View public profile
+                <ArrowRightIcon data-icon="inline-end" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className="w-full"
+              size="lg"
+              nativeButton={false}
+              render={<Link href={`/${project.username}`} />}
+              variant="outline"
+            >
+              View profile
+              <ArrowRightIcon data-icon="inline-end" />
+            </Button>
+          )}
         </CardContent>
       </Card>
       <Card>
@@ -105,11 +148,44 @@ export function ProjectSupportRail({ project }: { project: ProjectPage }) {
             <span className="ml-auto font-mono text-xs text-muted-foreground">00</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">No resources yet.</p>
-          <Button className="w-full bg-primary/10 text-primary hover:bg-primary/10" disabled>
-            View all resources
-          </Button>
+        <CardContent className="flex flex-col gap-4">
+          {project.isOwner ? (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-4">
+                {resourceCategories.map((category) => (
+                  <div className="flex items-center justify-between gap-3" key={category.label}>
+                    <p className="text-xs tracking-widest text-muted-foreground uppercase">
+                      {category.label}
+                    </p>
+                    <Button
+                      className="rounded-full"
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {category.action}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                className="w-full border-primary bg-primary/25 text-primary-foreground hover:bg-primary/25 disabled:opacity-100"
+                size="lg"
+                disabled
+              >
+                View all resources
+                <ArrowRightIcon data-icon="inline-end" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">No resources yet.</p>
+              <Button className="w-full bg-primary/10 text-primary hover:bg-primary/10" disabled>
+                View all resources
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
       <Card>
@@ -132,7 +208,7 @@ export function ProjectSupportRail({ project }: { project: ProjectPage }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-[10px] tracking-wide text-muted-foreground uppercase">{label}</dt>
+      <dt className="text-xs tracking-wide text-muted-foreground uppercase">{label}</dt>
       <dd className="text-sm font-medium">{value}</dd>
     </div>
   )

@@ -5,7 +5,7 @@ import { projectStatusLabel, type ProjectStatus } from "@/lib/project-status"
 import { cn } from "cn"
 
 const projectStatusBadgeVariants = cva(
-  "h-auto gap-1.5 px-2.5 py-1.5 text-[10px] font-normal",
+  "h-auto gap-1.5 px-2.5 py-1 text-xs font-normal",
   {
     variants: {
       status: {

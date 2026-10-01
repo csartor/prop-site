@@ -5,8 +5,6 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { z } from "zod"
-
 import { createProject } from "@/app/projects/actions"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,30 +26,11 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { emptyProjectForm, projectFormSchema, type ProjectFormValues } from "@/lib/project-form"
 import { projectStatuses, projectStatusLabel } from "@/lib/project-status"
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"])
 const maxImageBytes = 5 * 1024 * 1024
-
-const projectSchema = z.object({
-  title: z.string().trim().min(1, "Enter a title.").max(160, "Use 160 characters or fewer."),
-  description: z
-    .string()
-    .trim()
-    .min(1, "Enter a description.")
-    .max(2000, "Use 2000 characters or fewer."),
-  status: z.enum(projectStatuses),
-  isPublic: z.boolean(),
-  startedOn: z.string(),
-  completedOn: z.string(),
-  material: z.string().trim().max(200, "Use 200 characters or fewer."),
-  scale: z.string().trim().max(200, "Use 200 characters or fewer."),
-  techniques: z.string().trim().max(200, "Use 200 characters or fewer."),
-  tools: z.string().trim().max(200, "Use 200 characters or fewer."),
-  tags: z.array(z.string()),
-})
-
-type ProjectValues = z.infer<typeof projectSchema>
 
 const statuses = projectStatuses.map((value) => ({
   value,
@@ -71,21 +50,9 @@ export function CreateProjectDialog({
   const [tagDraft, setTagDraft] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const form = useForm<ProjectValues>({
-    resolver: zodResolver(projectSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      status: "in_progress",
-      isPublic: false,
-      startedOn: "",
-      completedOn: "",
-      material: "",
-      scale: "",
-      techniques: "",
-      tools: "",
-      tags: [],
-    },
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectFormSchema),
+    defaultValues: emptyProjectForm,
   })
   const tags = form.watch("tags")
   const status = form.watch("status")
@@ -114,7 +81,7 @@ export function CreateProjectDialog({
     setTagDraft("")
   }
 
-  async function submit(values: ProjectValues) {
+  async function submit(values: ProjectFormValues) {
     if (!cover) {
       setError("Add a cover image.")
       return

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, type CSSProperties, type ReactNode } from "react"
+import { type CSSProperties, type ReactNode } from "react"
 
+import { ComposerProvider, useComposer } from "@/components/composer"
 import { CreatePostDialog } from "@/components/create-post-dialog"
 import { HomeRail } from "@/components/home-rail"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -17,7 +18,25 @@ export function AppFrame({
   projects: ProjectOption[]
   children: ReactNode
 }) {
-  const [createOpen, setCreateOpen] = useState(false)
+  return (
+    <ComposerProvider>
+      <AppFrameLayout projects={projects} viewer={viewer}>
+        {children}
+      </AppFrameLayout>
+    </ComposerProvider>
+  )
+}
+
+function AppFrameLayout({
+  viewer,
+  projects,
+  children,
+}: {
+  viewer: HomeViewer
+  projects: ProjectOption[]
+  children: ReactNode
+}) {
+  const composer = useComposer()
   const profileHref = viewer.canPost || viewer.reason === "onboarding" ? "/profile" : "/login"
 
   return (
@@ -32,7 +51,7 @@ export function AppFrame({
         createHref={
           viewer.canPost ? undefined : viewer.reason === "anonymous" ? "/login" : "/onboarding"
         }
-        onCreate={viewer.canPost ? () => setCreateOpen(true) : undefined}
+        onCreate={viewer.canPost ? () => composer?.openComposer() : undefined}
         profileHref={profileHref}
       />
       <SidebarInset className="bg-background">
@@ -41,15 +60,16 @@ export function AppFrame({
         </div>
         {children}
       </SidebarInset>
-      {viewer.canPost ? (
+      {viewer.canPost && composer ? (
         <CreatePostDialog
           author={{
             displayName: viewer.displayName,
             username: viewer.username,
             avatarUrl: viewer.avatarUrl,
           }}
-          onOpenChange={setCreateOpen}
-          open={createOpen}
+          intent={composer.intent}
+          onOpenChange={composer.setOpen}
+          open={composer.open}
           projects={projects}
         />
       ) : null}
