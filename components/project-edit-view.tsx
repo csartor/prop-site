@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 
 import { updateProject } from "@/app/projects/actions"
+import { ProjectFandomField } from "@/components/project-fandom-field"
 import { ProjectNavigation } from "@/components/project-navigation"
 import { ProjectUpdates } from "@/components/project-updates"
 import { Button } from "@/components/ui/button"
@@ -32,7 +33,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { projectFormSchema, type ProjectFormValues } from "@/lib/project-form"
 import { projectStatuses, projectStatusLabel } from "@/lib/project-status"
-import type { ProjectPage } from "@/lib/projects"
+import type { FandomOption, ProjectPage } from "@/lib/projects"
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"])
 const maxImageBytes = 5 * 1024 * 1024
@@ -43,9 +44,11 @@ const statuses = projectStatuses.map((value) => ({
 }))
 
 export function ProjectEditView({
+  fandoms,
   project,
   onDone,
 }: {
+  fandoms: FandomOption[]
   project: ProjectPage
   onDone: () => void
 }) {
@@ -64,6 +67,7 @@ export function ProjectEditView({
       status: project.status,
       isPublic: project.visibility === "public",
       tags: project.tags,
+      fandomIds: project.fandomIds,
       startedOn: project.startedOn ?? "",
       completedOn: project.completedOn ?? "",
       material: project.material === "—" ? "" : project.material,
@@ -123,6 +127,7 @@ export function ProjectEditView({
     formData.set("techniques", values.techniques)
     formData.set("tools", values.tools)
     formData.set("tags", JSON.stringify(values.tags))
+    formData.set("fandomIds", JSON.stringify(values.fandomIds))
     if (cover) formData.set("cover", cover)
     setPending(true)
     setError(null)
@@ -268,6 +273,7 @@ export function ProjectEditView({
                 </div>
               ) : null}
             </Field>
+            <ProjectFandomField control={form.control} fandoms={fandoms} />
           </FieldGroup>
         </div>
       </div>

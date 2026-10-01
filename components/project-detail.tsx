@@ -7,13 +7,19 @@ import { ProjectHero } from "@/components/project-hero"
 import { ProjectNavigation } from "@/components/project-navigation"
 import { ProjectSupportRail } from "@/components/project-support-rail"
 import { ProjectUpdates } from "@/components/project-updates"
-import type { ProjectPage } from "@/lib/projects"
+import type { FandomOption, ProjectPage } from "@/lib/projects"
 
-export function ProjectDetail({ project }: { project: ProjectPage }) {
+export function ProjectDetail({
+  fandoms,
+  project,
+}: {
+  fandoms: FandomOption[]
+  project: ProjectPage
+}) {
   const [editing, setEditing] = useState(false)
 
   if (editing && project.isOwner) {
-    return <ProjectEditView onDone={() => setEditing(false)} project={project} />
+    return <ProjectEditView fandoms={fandoms} onDone={() => setEditing(false)} project={project} />
   }
 
   return (

@@ -35,10 +35,16 @@ function textOrNull(value: string) {
 
 function readProjectForm(formData: FormData) {
   let rawTags: unknown = []
+  let rawFandoms: unknown = []
   try {
     rawTags = JSON.parse(String(formData.get("tags") ?? "[]"))
   } catch {
     return { error: "Check the tags and try again." } as const
+  }
+  try {
+    rawFandoms = JSON.parse(String(formData.get("fandomIds") ?? "[]"))
+  } catch {
+    return { error: "Check the fandoms and try again." } as const
   }
 
   const parsed = projectFormSchema.safeParse({
@@ -47,6 +53,7 @@ function readProjectForm(formData: FormData) {
     status: formData.get("status"),
     isPublic: formData.get("isPublic") === "true",
     tags: rawTags,
+    fandomIds: rawFandoms,
     startedOn: String(formData.get("startedOn") ?? ""),
     completedOn: String(formData.get("completedOn") ?? ""),
     material: formData.get("material") ?? "",
@@ -74,6 +81,47 @@ function projectFields(data: z.infer<typeof projectFormSchema>) {
     techniques: textOrNull(data.techniques),
     tools: textOrNull(data.tools),
   }
+}
+
+async function replaceProjectFandoms(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: string,
+  fandomIds: string[],
+) {
+  const ids = [...new Set(fandomIds)]
+  const { data: existing, error: readError } = await supabase
+    .from("project_fandoms")
+    .select("filter_option_id")
+    .eq("project_id", projectId)
+  if (readError) return readError.message
+
+  const current = new Set(
+    ((existing ?? []) as { filter_option_id: string }[]).map((row) => row.filter_option_id),
+  )
+  const next = new Set(ids)
+  const toAdd = ids.filter((id) => !current.has(id))
+  const toRemove = [...current].filter((id) => !next.has(id))
+
+  if (toAdd.length > 0) {
+    const { error } = await supabase.from("project_fandoms").insert(
+      toAdd.map((filterOptionId) => ({
+        project_id: projectId,
+        filter_option_id: filterOptionId,
+      })),
+    )
+    if (error) return error.message
+  }
+
+  if (toRemove.length > 0) {
+    const { error } = await supabase
+      .from("project_fandoms")
+      .delete()
+      .eq("project_id", projectId)
+      .in("filter_option_id", toRemove)
+    if (error) return error.message
+  }
+
+  return null
 }
 
 function coverFile(formData: FormData) {
@@ -127,7 +175,15 @@ export async function createProject(formData: FormData): Promise<{ error?: strin
     return { error: insertError.message }
   }
 
+  const fandomError = await replaceProjectFandoms(supabase, projectId, parsed.data.fandomIds)
+  if (fandomError) {
+    await supabase.from("projects").delete().eq("id", projectId).eq("user_id", user.id)
+    await supabase.storage.from("post-assets").remove([coverPath])
+    return { error: fandomError }
+  }
+
   revalidatePath("/profile")
+  revalidatePath("/projects")
   revalidatePath(`/projects/${projectId}`)
   return {}
 }
@@ -191,8 +247,12 @@ export async function updateProject(
     await supabase.storage.from("post-assets").remove([row.cover_path])
   }
 
+  const fandomError = await replaceProjectFandoms(supabase, parsedId.data, parsed.data.fandomIds)
+  if (fandomError) return { error: fandomError }
+
   revalidatePath("/")
   revalidatePath("/profile")
+  revalidatePath("/projects")
   revalidatePath(`/projects/${parsedId.data}`)
   if (profile?.username) revalidatePath(`/${profile.username}`)
   return {}

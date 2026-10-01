@@ -12,6 +12,7 @@ export function SiteHeaderWrapper({ user }: { user: User | null }) {
     pathname.startsWith("/admin") ||
     pathname === "/" ||
     pathname === "/profile" ||
+    pathname === "/projects" ||
     pathname.startsWith("/projects/")
   ) {
     return null

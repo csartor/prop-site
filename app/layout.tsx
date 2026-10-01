@@ -13,17 +13,17 @@ export const metadata: Metadata = {
 
 const fontSans = Geist({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-geist-sans",
 });
 
 const fontSerif = Lora({
   subsets: ["latin"],
-  variable: "--font-serif",
+  variable: "--font-lora",
 });
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-geist-mono",
 });
 
 export default async function RootLayout({
@@ -39,7 +39,7 @@ export default async function RootLayout({
       className="dark"
       suppressHydrationWarning
     >
-      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
+      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} font-sans antialiased`}>
         <ThemeProvider>
           <SiteHeaderWrapper user={user} />
           {children}

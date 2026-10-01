@@ -25,9 +25,9 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 const links = [
-  { title: "Projects", icon: CubeIcon },
-  { title: "Work", icon: BriefcaseIcon },
-  { title: "Notifications", icon: BellIcon },
+  { title: "Projects", icon: CubeIcon, href: "/projects" },
+  { title: "Work", icon: BriefcaseIcon, href: undefined },
+  { title: "Notifications", icon: BellIcon, href: undefined },
 ]
 
 const railButtonClass =
@@ -76,12 +76,24 @@ export function HomeRail({
                 <span>Home</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {links.map(({ title, icon: Icon }) => (
+            {links.map(({ title, icon: Icon, href }) => (
               <SidebarMenuItem key={title}>
-                <SidebarMenuButton className={railButtonClass} tooltip={title} type="button">
-                  <Icon />
-                  <span>{title}</span>
-                </SidebarMenuButton>
+                {href ? (
+                  <SidebarMenuButton
+                    className={railButtonClass}
+                    isActive={pathname === href || pathname.startsWith(`${href}/`)}
+                    render={<Link href={href} />}
+                    tooltip={title}
+                  >
+                    <Icon />
+                    <span>{title}</span>
+                  </SidebarMenuButton>
+                ) : (
+                  <SidebarMenuButton className={railButtonClass} tooltip={title} type="button">
+                    <Icon />
+                    <span>{title}</span>
+                  </SidebarMenuButton>
+                )}
               </SidebarMenuItem>
             ))}
             <SidebarMenuItem>

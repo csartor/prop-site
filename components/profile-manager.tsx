@@ -16,12 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { OwnedPost, OwnedProject } from "@/lib/projects"
+import type { FandomOption, OwnedPost, OwnedProject } from "@/lib/projects"
 
 export function ProfileManager({
+  fandoms,
   projects,
   posts,
 }: {
+  fandoms: FandomOption[]
   projects: OwnedProject[]
   posts: OwnedPost[]
 }) {
@@ -72,7 +74,7 @@ export function ProfileManager({
           </ul>
         )}
       </section>
-      <CreateProjectDialog onOpenChange={setCreateOpen} open={createOpen} />
+      <CreateProjectDialog fandoms={fandoms} onOpenChange={setCreateOpen} open={createOpen} />
     </div>
   )
 }

@@ -5,14 +5,15 @@ import { projectStatusLabel, type ProjectStatus } from "@/lib/project-status"
 import { cn } from "cn"
 
 const projectStatusBadgeVariants = cva(
-  "h-auto gap-1.5 px-2.5 py-1 text-xs font-normal",
+  "h-auto gap-1.5 rounded-full border-current bg-background/70 px-2.5 py-1 text-xs font-medium backdrop-blur-[2px]",
   {
     variants: {
       status: {
-        completed: "border-success/30 bg-success/10 text-success",
-        in_progress: "border-primary/30 bg-primary/10 text-primary",
-        paused: "border-warning/30 bg-warning/10 text-warning",
-        cancelled: "border-destructive/30 bg-destructive/10 text-destructive",
+        completed:
+          "border-status-complete bg-status-complete-background text-status-complete dark:border-status-complete dark:bg-status-complete-background dark:text-status-complete",
+        in_progress: "text-primary",
+        paused: "text-warning",
+        cancelled: "text-destructive",
       },
     },
   },

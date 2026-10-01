@@ -4,7 +4,7 @@ export type ProjectStatus = (typeof projectStatuses)[number]
 
 const projectStatusLabels: Record<ProjectStatus, string> = {
   in_progress: "In progress",
-  completed: "Completed",
+  completed: "Complete",
   paused: "Paused",
   cancelled: "Cancelled",
 }

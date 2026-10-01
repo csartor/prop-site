@@ -1,6 +1,6 @@
 import { createClient, getOptionalUser } from "@/lib/supabase/server"
 import type { HomeViewer } from "@/lib/posts"
-import type { ProjectStatus } from "@/lib/project-status"
+import { projectStatuses, type ProjectStatus } from "@/lib/project-status"
 
 export { projectStatusLabel } from "@/lib/project-status"
 export type { ProjectStatus } from "@/lib/project-status"
@@ -13,6 +13,31 @@ export type ProjectOption = {
 export type OwnedProject = ProjectOption & {
   visibility: "public" | "private"
   status: ProjectStatus
+}
+
+export type ProjectShelfItem = {
+  id: string
+  title: string
+  status: ProjectStatus
+  coverUrl: string | null
+  photoCount: number
+  updateCount: number
+  resourceCount: number
+  updatedLabel: string
+}
+
+export type FandomOption = {
+  id: string
+  label: string
+  slug: string
+}
+
+export type ExploreProject = ProjectShelfItem & {
+  author: string
+  username: string
+  avatarUrl: string | null
+  material: string
+  fandomIds: string[]
 }
 
 export type OwnedPost = {
@@ -47,6 +72,7 @@ export type ProjectPage = {
   status: ProjectStatus
   visibility: "public" | "private"
   tags: string[]
+  fandomIds: string[]
   startedLabel: string
   completedLabel: string
   material: string
@@ -89,6 +115,156 @@ function formatDateOnly(value: string | null) {
 function blank(value: string | null) {
   const trimmed = value?.trim()
   return trimmed ? trimmed : "—"
+}
+
+function relativeUpdatedLabel(value: string) {
+  const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000)
+  if (days <= 0) return "Today"
+  if (days === 1) return "Yesterday"
+  return `${days}d ago`
+}
+
+type ActivityPost = {
+  project_id: string
+  created_at: string
+  post_images: { id: string }[] | null
+}
+
+function collectActivity(posts: ActivityPost[]) {
+  const activity = new Map<string, { count: number; latest: string; photos: number }>()
+  for (const post of posts) {
+    const photos = post.post_images?.length ?? 0
+    const current = activity.get(post.project_id)
+    if (!current) {
+      activity.set(post.project_id, { count: 1, latest: post.created_at, photos })
+      continue
+    }
+    current.count += 1
+    current.photos += photos
+    if (post.created_at > current.latest) current.latest = post.created_at
+  }
+  return activity
+}
+
+export async function listProjectShelf(): Promise<ProjectShelfItem[]> {
+  const user = await getOptionalUser()
+  if (!user) return []
+  const supabase = await createClient()
+  const [{ data: projects }, { data: posts }] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, title, status, cover_path, updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("posts")
+      .select("project_id, created_at, post_images(id)")
+      .eq("user_id", user.id)
+      .not("project_id", "is", null),
+  ])
+
+  const activity = collectActivity((posts ?? []) as ActivityPost[])
+
+  return (
+    (projects ?? []) as {
+      id: string
+      title: string
+      status: string
+      cover_path: string | null
+      updated_at: string
+    }[]
+  ).map((project) => {
+    const updates = activity.get(project.id)
+    const latest =
+      updates && updates.latest > project.updated_at ? updates.latest : project.updated_at
+    const status = projectStatuses.includes(project.status as ProjectStatus)
+      ? (project.status as ProjectStatus)
+      : "in_progress"
+    return {
+      id: project.id,
+      title: project.title,
+      status,
+      coverUrl: assetUrl(supabase, project.cover_path),
+      photoCount: (project.cover_path ? 1 : 0) + (updates?.photos ?? 0),
+      updateCount: updates?.count ?? 0,
+      resourceCount: 0,
+      updatedLabel: relativeUpdatedLabel(latest),
+    }
+  })
+}
+
+export async function listFandomOptions(): Promise<FandomOption[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("maker_filter_options")
+    .select("id, label, slug")
+    .eq("category", "fandom")
+    .eq("enabled", true)
+    .order("sort_order", { ascending: true })
+  return (data ?? []) as FandomOption[]
+}
+
+export async function listExploreProjects(): Promise<ExploreProject[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("projects")
+    .select(
+      "id, title, status, cover_path, updated_at, material, profiles!inner(display_name, username, avatar_url), project_fandoms(filter_option_id)",
+    )
+    .eq("visibility", "public")
+    .order("updated_at", { ascending: false })
+
+  const rows = (data ?? []) as unknown as {
+    id: string
+    title: string
+    status: string
+    cover_path: string | null
+    updated_at: string
+    material: string | null
+    profiles:
+      | { display_name: string | null; username: string | null; avatar_url: string | null }
+      | { display_name: string | null; username: string | null; avatar_url: string | null }[]
+    project_fandoms: { filter_option_id: string }[] | null
+  }[]
+  if (rows.length === 0) return []
+
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("project_id, created_at, post_images(id)")
+    .in(
+      "project_id",
+      rows.map((row) => row.id),
+    )
+
+  const activity = collectActivity((posts ?? []) as ActivityPost[])
+
+  return rows.flatMap((project) => {
+    const profile = Array.isArray(project.profiles) ? project.profiles[0] : project.profiles
+    if (!profile?.username) return []
+    const updates = activity.get(project.id)
+    const latest =
+      updates && updates.latest > project.updated_at ? updates.latest : project.updated_at
+    const status = projectStatuses.includes(project.status as ProjectStatus)
+      ? (project.status as ProjectStatus)
+      : "in_progress"
+    return [
+      {
+        id: project.id,
+        title: project.title,
+        status,
+        coverUrl: assetUrl(supabase, project.cover_path),
+        photoCount: (project.cover_path ? 1 : 0) + (updates?.photos ?? 0),
+        updateCount: updates?.count ?? 0,
+        resourceCount: 0,
+        updatedLabel: relativeUpdatedLabel(latest),
+        author: profile.display_name || profile.username,
+        username: profile.username,
+        avatarUrl: profile.avatar_url,
+        material: project.material?.trim() ?? "",
+        fandomIds: (project.project_fandoms ?? []).map((item) => item.filter_option_id),
+      },
+    ]
+  })
 }
 
 export async function listOwnedProjects(): Promise<ProjectOption[]> {
@@ -214,7 +390,7 @@ export async function getProjectPage(id: string): Promise<ProjectPage | null> {
   const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
   if (!profile?.username) return null
 
-  const [{ data: posts }, { count }] = await Promise.all([
+  const [{ data: posts }, { count }, { data: fandoms }] = await Promise.all([
     supabase
       .from("posts")
       .select("id, title, body, milestone, process_note, created_at, post_images(storage_path, sort_order)")
@@ -226,6 +402,7 @@ export async function getProjectPage(id: string): Promise<ProjectPage | null> {
       .select("id", { count: "exact", head: true })
       .eq("user_id", row.user_id)
       .eq("visibility", "public"),
+    supabase.from("project_fandoms").select("filter_option_id").eq("project_id", id),
   ])
 
   const updates = ((posts ?? []) as unknown as ProjectPostRow[]).map((post, index, all) => ({
@@ -259,6 +436,7 @@ export async function getProjectPage(id: string): Promise<ProjectPage | null> {
     status: row.status,
     visibility: row.visibility,
     tags: row.tags ?? [],
+    fandomIds: ((fandoms ?? []) as { filter_option_id: string }[]).map((item) => item.filter_option_id),
     startedLabel: formatDateOnly(row.started_on),
     completedLabel: formatDateOnly(row.completed_on),
     material: blank(row.material),

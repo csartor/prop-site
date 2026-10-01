@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { createProject } from "@/app/projects/actions"
+import { ProjectFandomField } from "@/components/project-fandom-field"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -28,6 +29,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { emptyProjectForm, projectFormSchema, type ProjectFormValues } from "@/lib/project-form"
 import { projectStatuses, projectStatusLabel } from "@/lib/project-status"
+import type { FandomOption } from "@/lib/projects"
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"])
 const maxImageBytes = 5 * 1024 * 1024
@@ -38,9 +40,11 @@ const statuses = projectStatuses.map((value) => ({
 }))
 
 export function CreateProjectDialog({
+  fandoms,
   open,
   onOpenChange,
 }: {
+  fandoms: FandomOption[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -98,6 +102,7 @@ export function CreateProjectDialog({
     formData.set("techniques", values.techniques)
     formData.set("tools", values.tools)
     formData.set("tags", JSON.stringify(values.tags))
+    formData.set("fandomIds", JSON.stringify(values.fandomIds))
     formData.set("cover", cover)
     setPending(true)
     setError(null)
@@ -256,6 +261,7 @@ export function CreateProjectDialog({
                 </div>
               ) : null}
             </Field>
+            <ProjectFandomField control={form.control} fandoms={fandoms} />
           </FieldGroup>
           {error ? (
             <p className="text-sm text-destructive" role="alert">
